@@ -182,7 +182,7 @@ void Measure() {
 
         u += -J * s[i] * s[Pbc(i + 1)] - 0.5 * h * (s[i] + s[Pbc(i + 1)]);
         m += s[i];
-        x +=  beta * pow(s[i], 2);
+        x += beta * pow(s[i], 2);
 
         // INCLUDE YOUR CODE HERE
     
