@@ -13,6 +13,7 @@ _/    _/  _/_/_/  _/_/_/_/ email: Davide.Galli@unimi.it
 #include <ostream>
 #include <cmath>
 #include <iomanip>
+#include <sstream>
 #include "Monte_Carlo_ISING_1D.h"
 
 using namespace std;
@@ -83,16 +84,33 @@ void Input(void) {
     cout << "External field = " << h << endl
          << endl;
 
+    std::stringstream h_stream;
+    h_stream << std::fixed << std::setprecision(2) << h;
+    h_str = h_stream.str();
+
+    if(h == 0) {
+
+        h_str = "0";
+
+    }
+
     ReadInput >> metro; // if=1 Metropolis else Gibbs
 
     ReadInput >> nblk;
 
     ReadInput >> nstep;
 
-    if (metro == 1)
+    if (metro == 1) {
+
         cout << "The program perform Metropolis moves" << endl;
-    else
+
+    }
+    else {
+
+        h_str += "_g";
         cout << "The program perform Gibbs moves" << endl;
+
+    }
     
     cout << "Number of blocks = " << nblk << endl;
     cout << "Number of steps in one block = " << nstep << endl
@@ -136,14 +154,15 @@ void Move(int metro) {
         // Select randomly a particle (for C++ syntax, 0 <= o <= nspin-1)
         o = (int)(rnd.Rannyu() * nspin);
 
+        // ip = o, sm = s[o]
+
+        energy_old = Boltzmann(-s[o], o);
+        energy_new = Boltzmann(s[o], o);
+        double energy_delta = energy_new - energy_old;
+
         if (metro == 1) { // Metropolis
         
-            double energy_delta = 0;
-
-
-            energy_delta = s[Pbc(o - 1)] + s[Pbc(o + 1)]; 
-            energy_delta *= (2.0 * J * s[o]);
-            p = min(1.0, exp(-beta * energy_delta));
+            p = min(1.0, exp(beta * energy_delta));
 
             double r = rnd.Rannyu();  
         
@@ -154,12 +173,22 @@ void Move(int metro) {
 
             }
 
-            attempted++;
-
         } else { // Gibbs sampling
-            // INCLUDE YOUR CODE HERE
+
+            p = 1.0 / (1.0 + exp(-beta * energy_delta)); // +beta since all other spins are changed?
+
+            double r = rnd.Rannyu();  
+        
+            if(r < p) {
+
+                s[o] *= -1.0;
+                accepted++;
+
+            }
         
         }
+
+        attempted++;
     
     }
 
@@ -175,20 +204,21 @@ double Boltzmann(int sm, int ip) {
 void Measure() {
     
     int bin;
-    double u = 0.0, m = 0.0, x = 0.0;
+    double u = 0.0, c = 0.0, m = 0.0, x = 0.0;
 
     // cycle over spins
     for (int i = 0; i < nspin; ++i) {
 
         u += -J * s[i] * s[Pbc(i + 1)] - 0.5 * h * (s[i] + s[Pbc(i + 1)]);
         m += s[i];
-        x += beta * pow(s[i], 2);
-
-        // INCLUDE YOUR CODE HERE
     
     }
+
+    c += pow(u, 2);
+    x += beta * pow(m, 2);
     
     walker[iu] = u;
+    walker[ic] = c;
     walker[im] = m;
     walker[ix] = x;
 
@@ -235,38 +265,45 @@ void Accumulate(void) { // Update block averages
 
 void Averages(int iblk) { // Print results for current block
 
-    ofstream Ene, Heat, Mag, Chi;
+    ofstream Ene, Hec, Mag, Chi;
     const char separator = ',';
 
     cout << "Block number " << iblk << endl;
     cout << "Acceptance rate " << accepted / attempted << endl
          << endl;
 
-    Ene.open("output.ene.0", ios::app);
-    Mag.open("output.mag.0", ios::app);
-    Chi.open("output.chi.0", ios::app);
+    Ene.open("output.ene." + h_str, ios::app);
+    Hec.open("output.hec." + h_str, ios::app);
+    Mag.open("output.mag." + h_str, ios::app);
+    Chi.open("output.chi." + h_str, ios::app);
 
     stima_u = blk_av[iu] / blk_norm / (double)nspin; // Energy
+    stima_c = (blk_av[ic] / blk_norm / (double)nspin - pow(stima_u, 2) * (double)nspin) * pow(beta, 2); // Second term (<H>/N)^2 * N = <H>^2/N
     stima_m = blk_av[im] / blk_norm / (double)nspin;
     stima_x = blk_av[ix] / blk_norm / (double)nspin; 
     
     glob_av[iu] += stima_u;
+    glob_av[ic] += stima_c;
     glob_av[im] += stima_m;
     glob_av[ix] += stima_x;
 
     glob_av2[iu] += stima_u * stima_u;
+    glob_av2[ic] += stima_c * stima_c;
     glob_av2[im] += stima_m * stima_m;
     glob_av2[ix] += stima_x * stima_x;
 
     err_u = Error(glob_av[iu], glob_av2[iu], iblk);
+    err_c = Error(glob_av[ic], glob_av2[ic], iblk);
     err_m = Error(glob_av[im], glob_av2[im], iblk);
     err_x = Error(glob_av[ix], glob_av2[ix], iblk);
 
     Ene << iblk << separator << stima_u << separator << glob_av[iu] / (double)iblk << separator << err_u << endl;
+    Hec << iblk << separator << stima_c << separator << glob_av[ic] / (double)iblk << separator << err_c << endl;
     Mag << iblk << separator << stima_m << separator << glob_av[im] / (double)iblk << separator << err_m << endl;
     Chi << iblk << separator << stima_x << separator << glob_av[ix] / (double)iblk << separator << err_x << endl;
 
     Ene.close();
+    Hec.close();
     Mag.close();
     Chi.close();
 

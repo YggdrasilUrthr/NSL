@@ -35,6 +35,7 @@ double s[m_spin];
 // thermodynamical state
 int nspin;
 double beta,temp,J,h;
+std::string h_str;
 
 // simulation
 int nstep, nblk, metro;
