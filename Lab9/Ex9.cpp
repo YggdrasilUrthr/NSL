@@ -31,10 +31,20 @@ int main() {
 
     Pop.Evolve();
 
+    csvwriter writer(csv_path + "Ex9_1_Hist.csv");
+    
+    std::vector<std::vector<double>> Hist = Pop.GetHist();
+
+    for (size_t i = 0; i < Hist[0].size(); ++i) {
+
+        writer.write_csv_line(std::vector<double>({Hist[0][i], Hist[1][i]}));
+
+    }
+
     Chromosome Best_Fit = Pop.GetBest();
     Best_Fit.PrintData();
 
-    csvwriter writer(csv_path + "Ex9_1_Cities.csv");
+    writer.change_file(csv_path + "Ex9_1_Cities.csv");
     uint32_t idx = 1;
 
     for (auto city : Cities) {
@@ -63,6 +73,15 @@ int main() {
 
     Pop.ChangeCities(Cities);
     Pop.Evolve();
+
+    writer.change_file(csv_path + "Ex9_2_Hist.csv");
+    Hist = Pop.GetHist();
+
+    for (size_t i = 0; i < Hist[0].size(); ++i) {
+
+        writer.write_csv_line(std::vector<double>({Hist[0][i], Hist[1][i]}));
+
+    }
 
     Best_Fit = Pop.GetBest();
     Best_Fit.PrintData();

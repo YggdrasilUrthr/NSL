@@ -1,13 +1,20 @@
 #include "Population.h"
 
+void Population::ClearHistory() {
+
+    m_Best_Fit.clear();
+    m_Best_Half_Avg.clear();
+
+}
+
 void Population::InitChromosomes() {
 
     std::vector<uint32_t> Seed(m_N_Cities, 0);
     std::iota(std::begin(Seed), std::end(Seed), 1); 
 
-    m_Chromosomes.push_back(Chromosome(Seed));
+    m_Chromosomes.push_back(Chromosome(Seed));            // NOTE In principle should remain, removed otherwise no evolution on circle
 
-    for (size_t i = 0; i < (m_M - 1); i++) {
+    for (size_t i = 0; i < (m_M - 1); i++) {                // Was i < (m_M - 1)
 
         uint32_t a, b;
 
@@ -32,6 +39,7 @@ Population::Population(uint32_t M, uint32_t N_Gen, std::vector<City> Cities, uin
 
     m_Rnd.Init_Random_Gen(PrimeLines);
     m_N_Cities = m_Cities.size();
+    ClearHistory();
     InitChromosomes();
 
 }
@@ -42,6 +50,7 @@ Population::Population(uint32_t M, uint32_t N_Gen, std::vector<City> Cities,
 
     m_Rnd.Init_Random_Gen(PrimeLines);
     m_N_Cities = m_Cities.size();
+    ClearHistory();
     InitChromosomes();
 
 }
@@ -52,6 +61,7 @@ void Population::ChangeCities(std::vector<City> NewCities) {
 
     m_Cities = NewCities;
     m_N_Cities = m_Cities.size();
+    ClearHistory();
     InitChromosomes();
 
 }
@@ -98,6 +108,28 @@ void Population::EvaluateFitness() {
         Chromosome.SetFit(fitness);
 
     }
+
+}
+
+double Population::EvalBestHalfAvg() {
+
+    double avg = 0;
+    uint32_t M_Half = floor(m_M / 2.0); 
+
+    if(!m_is_Ordered) {
+
+        OrderPop();
+
+    }
+
+    for(size_t i = 0; i < M_Half; ++i) {
+
+        avg += m_Chromosomes[i].GetFit();
+
+    }
+
+    return avg / (double)M_Half;
+    
 
 }
 
@@ -233,7 +265,13 @@ void Population::Crossover(Chromosome &X, Chromosome &Y) {
 
 }
 
-void Population::Evolve() {
+void Population::Evolve(bool ClearHist, bool WriteHist) {
+
+    if(ClearHist) {
+
+        ClearHistory();
+
+    }
 
     for (size_t i = 0; i < m_N_Gen; ++i) {
 
@@ -261,7 +299,11 @@ void Population::Evolve() {
 
         }
 
+        m_Best_Fit.push_back(m_Chromosomes[0].GetFit());
+        m_Best_Half_Avg.push_back(EvalBestHalfAvg());
+
         std::swap(m_Chromosomes, NewGen);
+        m_is_Ordered = false;                                   // Breaks things
 
     }    
 
@@ -276,6 +318,12 @@ Chromosome Population::GetBest() {
     }
 
     return m_Chromosomes[0];
+
+}
+
+std::vector<std::vector<double>> Population::GetHist() {
+
+    return  std::vector<std::vector<double>>({m_Best_Fit, m_Best_Half_Avg});
 
 }
 

@@ -22,12 +22,17 @@ class Population {
         double m_Crossover_Prob;
         uint32_t m_N_Cities;
 
+        std::vector<double> m_Best_Fit;
+        std::vector<double> m_Best_Half_Avg;
+
         bool m_is_Ordered = false;
         double m_p = 2;
 
+        void ClearHistory();
         void InitChromosomes();
         void OrderPop();
         void EvaluateFitness();
+        double EvalBestHalfAvg();
         Chromosome Select();
         void Mutate(Chromosome &X);
         void Crossover(Chromosome &X, Chromosome&Y);
@@ -44,8 +49,9 @@ class Population {
         void SetMutateProb(std::vector<double> Mutate_Prob);
         void SetCrossoverProb(double Crossover_Prob);
 
-        void Evolve();
+        void Evolve(bool ClearHist = true, bool WriteHist = true);
         Chromosome GetBest();
+        std::vector<std::vector<double>> GetHist();
         void PrintAll();
 
 };
