@@ -4,7 +4,6 @@
 #include <math.h>
 #include <array>
 
-const static std::string rangen_lib_path = "../Libs/RanGen/";
 const static std::string csv_path = "./CSV/";
 
 double error(double avg, double avg2, size_t n) {
@@ -21,93 +20,47 @@ double error(double avg, double avg2, size_t n) {
 
 }
 
-void init_random_gen(Random &rnd) {
-
-    int seed[4];
-    int p1, p2;
-    std::ifstream Primes(rangen_lib_path + "Primes");
-    
-    if (Primes.is_open()){
-        
-        Primes >> p1 >> p2 ;
-   
-    } else std::cerr << "PROBLEM: Unable to open Primes" << std::endl;
-   
-    Primes.close();
-
-    std::ifstream input(rangen_lib_path + "seed.in");
-    std::string property;
-    
-    if(input.is_open()){
-        
-        while (!input.eof() ){
-            
-            input >> property;
-            
-            if( property == "RANDOMSEED" ){
-            
-                input >> seed[0] >> seed[1] >> seed[2] >> seed[3];
-                rnd.SetRandom(seed,p1,p2);
-            
-            }
-
-        }
-        
-        input.close();
-   
-    } else std::cerr << "PROBLEM: Unable to open seed.in" << std::endl;
-
-    rnd.SaveSeed();
-
-}
-
-double sample_angle(Random &rnd) {
+std::vector<double> sample_vertex(Random &rnd) {
 
     double x= 0.0;
     double y = 0.0;
-    double r = 0.0;
+    double r2 = 0.0;
 
-    // Sample angle between zero and pi / 2
+    // Sample point on unitary circumference
 
     do {
 
         x = rnd.Rannyu();
         y = rnd.Rannyu();
-        r = pow(x, 2) + pow(y, 2);
+        r2 = pow(x, 2) + pow(y, 2);
 
-    } while (r >= 1);
-    
-    double phi = (y >= 0) ? acos(x / sqrt(r)) : 2 * M_PI -  acos(x / sqrt(r));
+    } while (r2 >= 1);
 
-    return phi;
+    double sgn_x = rnd.Rannyu() >= 0.5 ? 1.0 : -1.0;
+    double sgn_y = rnd.Rannyu() >= 0.5 ? 1.0 : -1.0;
 
-}
-
-bool in_interval(double lower, double upper, double num) {
-
-    return (num < upper && num >= lower);
+    return std::vector<double>({x * sgn_x / sqrt(r2), y * sgn_y / sqrt(r2)});
 
 }
 
 int main() {
 
     Random rnd;
-    init_random_gen(rnd);
+    rnd.Init_Random_Gen();
 
-    const double d = 0.5;
-    const double L = 0.1;
+    const double d = 0.5;                   // Line distance
+    const double L = 0.1;                   // Needle length
 
-    const uint32_t W = 10;                  // Plane width
-    const uint32_t H = 10;                  // Plane height
+    // The sistem is periodic, is then possible to check hits only on a single cell (0, d)
 
-    uint32_t N_lines = W / d;
-
-    const uint32_t M = 10000;
-    const uint32_t N = 100;
+    const uint32_t M = 100000;               // Number of throws
+    const uint32_t N = 100;                 // Number of blocks
     uint32_t K = M / N;
 
-    std::vector<uint32_t> pi_avgs;
-    std::vector<uint32_t> pi_avgs2;
+    std::vector<double> pi_avgs;
+    std::vector<double> pi_avgs2;
+
+    csvwriter writer(csv_path + "Ex1_3_pos.csv");
 
     for (size_t i = 0; i < N; ++i) {
 
@@ -115,28 +68,24 @@ int main() {
 
         for (size_t j = 0; j < K; ++j) {
 
-            double center_x = rnd.Rannyu() * W;
-            double center_y = rnd.Rannyu() * H;
-            double angle = sample_angle(rnd);
+            double center_x = rnd.Rannyu() * d; // Lines are infinite => only one center coordinate (always inside cell) is needed
+            std::vector<double> vertex1 = sample_vertex(rnd);
 
+            writer.write_csv_line<double>(vertex1); 
 
+            std::vector<double> vertex2 = {center_x + L * vertex1[0], L * vertex1[1]};      // This can be inside or outside cell
 
-            std::vector<double> upper = {center_x + L / 2.0 * cos(angle), center_y + L / 2.0 * sin(angle)};
-            std::vector<double> lower = {center_x - L / 2.0 * cos(angle), center_y - L / 2.0 * sin(angle)};
+            // Lines line in x = 0 and x = d => needle cross line if lower_x < 0 v upper_x > d
 
-            for (size_t k = 0; k < N_lines; ++k) {
+            if(vertex2[0] > d || vertex2[0] < 0) {
 
-                if(in_interval(lower[0], upper[0], k * d)) {
-
-                    N_hit++;
-
-                }
+                N_hit++;
 
             }
 
         }
 
-        double pi_avg = 2 * L * K / (N_hit * d);
+        double pi_avg = 2.0 * L * (double)K / (N_hit * d);
         double pi_avg2 = pow(pi_avg, 2);
 
         pi_avgs.push_back(pi_avg);
@@ -167,7 +116,7 @@ int main() {
 
     }
 
-    csvwriter writer(csv_path + "Ex1_3.csv");
+    writer.change_file(csv_path + "Ex1_3.csv");
 
     for(auto item : data_out) {
 

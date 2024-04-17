@@ -5,51 +5,7 @@
 #include <functional>
 #include <math.h>
 
-const static std::string rangen_lib_path = "../Libs/RanGen/";
 const static std::string csv_path = "./CSV/";
-
-//TODO insert tis function in library
-//Check non uniform integral result
-
-void init_random_gen(Random &rnd) {
-
-    int seed[4];
-    int p1, p2;
-    std::ifstream Primes(rangen_lib_path + "Primes");
-    
-    if (Primes.is_open()){
-        
-        Primes >> p1 >> p2 ;
-   
-    } else std::cerr << "PROBLEM: Unable to open Primes" << std::endl;
-   
-    Primes.close();
-
-    std::ifstream input(rangen_lib_path + "seed.in");
-    std::string property;
-    
-    if(input.is_open()){
-        
-        while (!input.eof() ){
-            
-            input >> property;
-            
-            if( property == "RANDOMSEED" ){
-            
-                input >> seed[0] >> seed[1] >> seed[2] >> seed[3];
-                rnd.SetRandom(seed,p1,p2);
-            
-            }
-
-        }
-        
-        input.close();
-   
-    } else std::cerr << "PROBLEM: Unable to open seed.in" << std::endl;
-
-    rnd.SaveSeed();
-
-}
 
 double error(double avg_unif, double avg2_unif, size_t n) {
 
@@ -86,7 +42,7 @@ double ran_ar(Random &rnd, std::function<double(double)> distrib, double xmin, d
 int main() {
 
     Random rnd;
-    init_random_gen(rnd);
+    rnd.Init_Random_Gen();
 
     const uint32_t M = 10000;
     const uint32_t N = 100;

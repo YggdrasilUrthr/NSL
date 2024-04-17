@@ -4,7 +4,6 @@
 #include <array>
 #include <math.h>
 
-const static std::string rangen_lib_path = "../Libs/RanGen/";
 const static std::string csv_path = "./CSV/";
 
 double error(double avg, double avg2, size_t n) {
@@ -21,46 +20,6 @@ double error(double avg, double avg2, size_t n) {
 
 }
 
-void init_random_gen(Random &rnd) {
-
-    int seed[4];
-    int p1, p2;
-    std::ifstream Primes(rangen_lib_path + "Primes");
-    
-    if (Primes.is_open()){
-        
-        Primes >> p1 >> p2 ;
-   
-    } else std::cerr << "PROBLEM: Unable to open Primes" << std::endl;
-   
-    Primes.close();
-
-    std::ifstream input(rangen_lib_path + "seed.in");
-    std::string property;
-    
-    if(input.is_open()){
-        
-        while (!input.eof() ){
-            
-            input >> property;
-            
-            if( property == "RANDOMSEED" ){
-            
-                input >> seed[0] >> seed[1] >> seed[2] >> seed[3];
-                rnd.SetRandom(seed,p1,p2);
-            
-            }
-
-        }
-        
-        input.close();
-   
-    } else std::cerr << "PROBLEM: Unable to open seed.in" << std::endl;
-
-    rnd.SaveSeed();
-
-}
-
 bool in_interval(double lower, double upper, double num) {
 
     return (num < upper && num >= lower);
@@ -72,11 +31,11 @@ int main(){
     csvwriter writer(csv_path + "Ex1_1_1.csv");
 
     Random rnd;
-    init_random_gen(rnd);
+    rnd.Init_Random_Gen();
 
-    const uint32_t M = 10000;
-    const uint32_t N = 100;
-    uint32_t L = M / N;
+    const uint32_t M = 100000;       // Number of throws
+    const uint32_t N = 100;         // Number of blocks
+    uint32_t L = M / N;             // Throws per block
 
     std::vector<std::vector<double>> avg_1_data_vect;
     std::vector<std::vector<double>> avg_2_data_vect;
@@ -158,21 +117,21 @@ int main(){
     writer.change_file(csv_path + "Ex1_1_3.csv");
 
     const uint32_t Chi_M = 100;
+    const uint32_t Chi_Intervals = 100;
     const uint32_t N_Throws = 10000;
     
-    std::vector<double> chi_vect(100, 0);
+    std::vector<double> chi_vect(Chi_M, 0);
 
-    for (size_t i = 0; i < 100; ++i) {
+    for (size_t i = 0; i < Chi_M; ++i) {
         
-        std::vector<double> count_vect(Chi_M, 0);
+        std::vector<double> count_vect(Chi_Intervals, 0);
 
         for (size_t j = 0; j < N_Throws; ++j) {
 
             double r = rnd.Rannyu();
 
-            for (size_t k = 0; k < Chi_M; ++k) {
+            for (size_t k = 0; k < Chi_Intervals; ++k) {
 
-                //std::cout << r << std::endl;
                 count_vect[k] += in_interval(static_cast<double>(k) / Chi_M, static_cast<double>(k + 1) / Chi_M, r);   
 
             }        
