@@ -30,16 +30,13 @@ std::vector<double> sample_vertex(Random &rnd) {
 
     do {
 
-        x = rnd.Rannyu();
-        y = rnd.Rannyu();
+        x = rnd.Rannyu() * 2.0 - 1.0;
+        y = rnd.Rannyu() * 2.0 - 1.0;
         r2 = pow(x, 2) + pow(y, 2);
 
     } while (r2 >= 1);
 
-    double sgn_x = rnd.Rannyu() >= 0.5 ? 1.0 : -1.0;
-    double sgn_y = rnd.Rannyu() >= 0.5 ? 1.0 : -1.0;
-
-    return std::vector<double>({x * sgn_x / sqrt(r2), y * sgn_y / sqrt(r2)});
+    return std::vector<double>({x / sqrt(r2), y / sqrt(r2)});
 
 }
 
