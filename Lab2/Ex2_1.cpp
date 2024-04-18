@@ -44,8 +44,10 @@ int main() {
     Random rnd;
     rnd.Init_Random_Gen();
 
-    const uint32_t M = 10000;
+    const uint32_t M = 100000;
     const uint32_t N = 100;
+
+    // M = 100000 did not gave great results for linear sampling
 
     uint32_t L = M / N;
 

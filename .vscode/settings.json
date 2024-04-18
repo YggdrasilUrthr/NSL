@@ -50,6 +50,8 @@
         "tuple": "cpp",
         "ranges": "cpp",
         "sstream": "cpp",
-        "cinttypes": "cpp"
+        "cinttypes": "cpp",
+        "numbers": "cpp",
+        "span": "cpp"
     }
 }
