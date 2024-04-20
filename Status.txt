@@ -1,9 +1,9 @@
 N       C++     Py
 1       ok            
 2       ok
-3       wrk
+3       ok*
 4       ok
-5
+5       wrk
 6       ok?
 7
 8
@@ -11,3 +11,5 @@ N       C++     Py
 10      
 11
 12
+
+3: * check C in direct sampling
