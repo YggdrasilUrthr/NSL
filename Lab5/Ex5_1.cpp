@@ -1,39 +1,12 @@
 #include "../Libs/RanGen/random.h"
 #include "../Libs/CsvWriter/csvwriter.h"
+#include "../Libs/Utils/utils.h"
 
 #include <cmath>
 #include <functional>
 #include <algorithm>
 
 const static std::string csv_path = "./CSV/";
-
-inline double sgn(double x) {
-
-    return (x > 0) ? 1 : ((x < 0) ? -1 : 0);
-
-}
-
-std::vector<double> cart_to_sph(std::vector<double> cart_coords) {
-
-    std::vector<double> sph_coord(3,0);
-
-    double r_sqr = 0.0;
-
-    for (size_t i = 0; i < 3; ++i) {
-
-        r_sqr += pow(cart_coords[i], 2);
-
-    }
-    
-    // TODO check divergences??
-
-    sph_coord[0] = sqrt(r_sqr);
-    sph_coord[1] = acos(cart_coords[2] / sph_coord[0]);
-    sph_coord[2] = sgn(cart_coords[1]) * acos(cart_coords[0] / sqrt(pow(cart_coords[0], 2) + pow(cart_coords[1], 2)));
-
-    return sph_coord;
-
-}
 
 double H_GS(std::vector<double> sph_coords) {
 
@@ -49,20 +22,37 @@ double H_2P(std::vector<double> sph_coords) {
 
 }
 
-bool Move(Random &rnd, double metr_step, std::vector<double> &x_n, std::function<double(std::vector<double>)> psi) {
+bool Move(
+    
+    Random &rnd, 
+    double metr_step, 
+    std::vector<double> &x_n, 
+    std::function<double(std::vector<double>)> psi2, 
+    bool gauss_sample = false
+    
+) {
 
     std::vector<double> x_n_m(3,0);
 
-    for (size_t j = 0; j < 3; j++) {
+    for (size_t j = 0; j < 3; j++) {        
 
-        x_n_m[j] = x_n[j] + (rnd.Rannyu() * 2.0 - 1.0) * metr_step;
+        if(gauss_sample) {
+
+            // Use metr_step as std. dev. => implemented version in Random = my implementation, see Ex3_1_1
+            x_n_m[j] = x_n[j] + rnd.Gauss(0, metr_step);     
+
+        } else {
+
+            x_n_m[j] = x_n[j] + rnd.Rannyu(-metr_step, metr_step);
+
+        }
 
     }
 
     std::vector<double> x_n_sph = cart_to_sph(x_n);
     std::vector<double> x_n_m_sph = cart_to_sph(x_n_m);
 
-    double p = std::min(1.0, psi(x_n_m_sph) / psi(x_n_sph));
+    double p = std::min(1.0, psi2(x_n_m_sph) / psi2(x_n_sph));
     double r = rnd.Rannyu();
 
     if (r < p) {
@@ -76,56 +66,158 @@ bool Move(Random &rnd, double metr_step, std::vector<double> &x_n, std::function
 
 }
 
-int main() {
+void Run_Sim(
+    
+    const uint32_t n_blocks, 
+    const uint32_t step_block, 
+    Random &rnd, double metr_step, 
+    std::function<double(std::vector<double>)> psi2,
+    csvwriter &writer_r,
+    csvwriter *writer_pos = nullptr,
+    std::vector<double> start_x = std::vector<double>({3, 0}),
+    bool gauss_sample = false
 
-    const uint32_t M = 10e4;            // Final goal 10e6
-    double metr_step = 1.1;
+) {
+
+    std::vector<double> x_n = start_x;              // Metropolis starting point
+    std::vector<double> prog_avg(3, 0);
+
+    for (size_t i = 0; i < n_blocks; ++i) {
+
+        uint32_t attempted = 0;
+        uint32_t accepted = 0;
+
+        double r = 0.0;
+
+        for (size_t j = 0; j < step_block; ++j) {
+
+            if (Move(rnd, metr_step, x_n, psi2, gauss_sample)) {
+
+                accepted++;
+
+                if (writer_pos != nullptr) {
+
+                    writer_pos->write_csv_line(x_n);
+
+                }
+
+            }
+
+            r += (cart_dist(x_n) / step_block);
+            attempted++;
+        
+        }
+
+        prog_avg[0] += r;
+        prog_avg[1] += pow(r, 2);
+
+        prog_avg[2] = error(prog_avg[0] / (i + 1), prog_avg[1] / (i + 1), i);       
+
+        writer_r.write_csv_line(std::vector<double>({prog_avg[0] / (i + 1), prog_avg[2]})); 
+
+        std::cout << "Acceptance ratio in block " + std::to_string(i + 1) + ": " << (double)accepted / attempted << std::endl;
+
+    }
+
+}
+
+std::vector<double> Equilibrate(
+    
+    Random &rnd, double metr_step, 
+    std::function<double(std::vector<double>)> psi2,
+    double start_r = 50.0,                                   // Completely random large value
+    csvwriter *writer_r = nullptr,
+    bool gauss_sample = false
+
+) {
+
+    const uint32_t N_eq = 1e3;
+    const uint32_t L_eq = 1;
+
+    std::vector<double> x_n = std::vector<double>({start_r, 0.0, 0.0});    // Start far from the origin to see equilibration effect
+
+    for (size_t i = 0; i < N_eq; ++i) {
+
+        uint32_t attempted = 0;
+        uint32_t accepted = 0;
+
+        double r = 0.0;
+
+        for (size_t j = 0; j < L_eq; ++j) {
+
+            Move(rnd, metr_step, x_n, psi2, gauss_sample);
+            r += (cart_dist(x_n) / L_eq);
+        
+        }    
+
+        if (writer_r != nullptr) {
+
+            writer_r->write_csv_line(std::vector<double>({r})); 
+
+        }
+
+    }
+
+    return x_n;
+
+}
+
+int main(int argc, char ** argv) {
+
+    const uint32_t M = 1e6;        // Number of throws
+    const uint32_t N = 100;         // Number of blocks
+    const uint32_t L = M / N;       // Throws per block => 10e4 throws per block
+    double metr_step_gs = 1.2; 
+    double metr_step_2P = 3.0;
 
     Random rnd;
     rnd.Init_Random_Gen();
 
-    csvwriter writer(csv_path + "Ex5_1_GS.csv");
+    std::vector<double> eq_x_GS;
+    std::vector<double> eq_x_2P;
 
-    std::vector<double> x_n(3, 0);
-    uint32_t attempted = 0;
-    uint32_t accepted = 0;
+    bool gauss_sample = false;
+    std::string gauss_fn = "";
 
-    for (size_t i = 0; i < M; ++i) {
+    if (argc > 2 && std::stoi(std::string(argv[2]))) {
+    
+        gauss_sample = true;
+        gauss_fn = "_gauss";
 
-        if (Move(rnd, metr_step, x_n, H_GS)) {
+        // Change metr_step to have 50% prob.
 
-            accepted++;
-            writer.write_csv_line(x_n);
+        metr_step_gs = 0.8;
+        metr_step_2P = 2.0;
 
-        }
+    }
+    
+    csvwriter writer_pos(csv_path + "Ex5_1_GS_pos" + gauss_fn + ".csv");
+    csvwriter writer_r(csv_path + "Ex5_1_GS_r" + gauss_fn + ".csv");
 
-        attempted++;
+    if (argc > 1 && std::stoi(std::string(argv[1]))) {
+
+        // Dump equilibration data if asked by user
+
+        writer_r.change_file(csv_path + "Ex5_1_GS_eq" + gauss_fn + ".csv");
+        eq_x_GS = Equilibrate(rnd, metr_step_gs, H_GS, 12.0, &writer_r, gauss_sample);       // Start 10 times metr_step away 
+        writer_r.change_file(csv_path + "Ex5_1_2P_eq" + gauss_fn + ".csv");
+        eq_x_2P = Equilibrate(rnd, metr_step_2P, H_2P, 24.0, &writer_r, gauss_sample);       // 2P orbital extends more in space (see <r0>), start farther away
+        writer_r.change_file(csv_path + "Ex5_1_GS_r" + gauss_fn + ".csv");
+
+    } else {
+
+        eq_x_GS = Equilibrate(rnd, metr_step_gs, H_GS, 12.0, nullptr, gauss_sample);
+        eq_x_2P = Equilibrate(rnd, metr_step_2P, H_2P, 24.0, nullptr, gauss_sample);
 
     }
 
-    std::cout << "Acceptance ratio GS: " << (double)accepted / attempted << std::endl;
+    std::cout << "Simulating position for GS orbital..." << std::endl;
+    Run_Sim(N, L, rnd, metr_step_gs, H_GS, writer_r, &writer_pos, eq_x_GS, gauss_sample);
 
-    writer.change_file(csv_path + "Ex5_1_2P.csv");
-
-    x_n = {0.5, 0, 0};
-    metr_step = 2.2;
-    attempted = 0;
-    accepted = 0;
-
-    for (size_t i = 0; i < M; ++i) {
-
-        if (Move(rnd, metr_step, x_n, H_2P)) {
-
-            accepted++;
-            writer.write_csv_line(x_n);
-
-        }
-
-        attempted++;
-
-    }
-
-    std::cout << "Acceptance ratio 2P: " << (double)accepted / attempted << std::endl;
+    writer_r.change_file(csv_path + "Ex5_1_2P_r" + gauss_fn + ".csv");
+    writer_pos.change_file(csv_path + "Ex5_1_2P_pos" + gauss_fn + ".csv");
+    std::cout << "Simulating position for 2P orbital..." << std::endl;
+    Run_Sim(N, L, rnd, metr_step_2P, H_2P, writer_r, &writer_pos, eq_x_2P, gauss_sample);
 
     return 0;
 
