@@ -21,6 +21,7 @@ using namespace std;
 int main()
 {
     Input();                                 // Inizialization
+
     for (int iblk = 1; iblk <= nblk; ++iblk) { // Simulation
         
         Reset(iblk); // Reset block averages
@@ -95,10 +96,10 @@ void Input(void) {
     }
 
     ReadInput >> metro; // if=1 Metropolis else Gibbs
-
     ReadInput >> nblk;
-
     ReadInput >> nstep;
+    ReadInput >> restart;
+    ReadInput >> equil;
 
     if (metro == 1) {
 
@@ -112,6 +113,18 @@ void Input(void) {
 
     }
     
+    if (equil == 1) {
+        
+        eq_str = "eq_";
+        cout << "Output file will be marked as equilibration" << endl;
+
+    } else {
+
+        eq_str = "";
+
+    }
+    
+
     cout << "Number of blocks = " << nblk << endl;
     cout << "Number of steps in one block = " << nstep << endl
          << endl;
@@ -125,14 +138,22 @@ void Input(void) {
 
     n_props = 4; // Number of observables
 
-    // initial configuration
-    for (int i = 0; i < nspin; ++i) {
+    // Load or generate initial configuration
 
-        if (rnd.Rannyu() >= 0.5)
-            s[i] = 1;
-        else
-            s[i] = -1;
-    
+    if(restart == 1) {
+
+        LoadConf();
+
+    } else {
+
+        for (int i = 0; i < nspin; ++i) {
+
+            if (rnd.Rannyu() >= 0.5)
+                s[i] = 1;
+            else
+                s[i] = -1;
+        }
+
     }
 
     // Evaluate energy etc. of the initial configuration
@@ -156,13 +177,13 @@ void Move(int metro) {
 
         // ip = o, sm = s[o]
 
-        energy_old = Boltzmann(-s[o], o);
-        energy_new = Boltzmann(s[o], o);
+        energy_new = Boltzmann(-s[o], o);
+        energy_old = Boltzmann(s[o], o);
         double energy_delta = energy_new - energy_old;
 
         if (metro == 1) { // Metropolis
         
-            p = min(1.0, exp(beta * energy_delta));
+            p = min(1.0, exp(-beta * energy_delta));
 
             double r = rnd.Rannyu();  
         
@@ -175,7 +196,7 @@ void Move(int metro) {
 
         } else { // Gibbs sampling
 
-            p = 1.0 / (1.0 + exp(-beta * energy_delta)); // +beta since all other spins are changed?
+            p = 1.0 / (1.0 + exp(beta * energy_delta)); // +beta since all other spins are changed?
 
             double r = rnd.Rannyu();  
         
@@ -214,15 +235,13 @@ void Measure() {
     
     }
 
-    c += pow(u, 2);
-    x += beta * pow(m, 2);
+    c = pow(u, 2);
+    x = beta * pow(m, 2);
     
     walker[iu] = u;
     walker[ic] = c;
     walker[im] = m;
     walker[ix] = x;
-
-    // INCLUDE YOUR CODE HERE
 
 }
 
@@ -272,10 +291,10 @@ void Averages(int iblk) { // Print results for current block
     cout << "Acceptance rate " << accepted / attempted << endl
          << endl;
 
-    Ene.open("output.ene." + h_str, ios::app);
-    Hec.open("output.hec." + h_str, ios::app);
-    Mag.open("output.mag." + h_str, ios::app);
-    Chi.open("output.chi." + h_str, ios::app);
+    Ene.open(eq_str + "output.ene." + h_str, ios::app);
+    Hec.open(eq_str + "output.hec." + h_str, ios::app);
+    Mag.open(eq_str + "output.mag." + h_str, ios::app);
+    Chi.open(eq_str + "output.chi." + h_str, ios::app);
 
     stima_u = blk_av[iu] / blk_norm / (double)nspin; // Energy
     stima_c = (blk_av[ic] / blk_norm / (double)nspin - pow(stima_u, 2) * (double)nspin) * pow(beta, 2); // Second term (<H>/N)^2 * N = <H>^2/N
@@ -307,8 +326,6 @@ void Averages(int iblk) { // Print results for current block
     Mag.close();
     Chi.close();
 
-    // INCLUDE YOUR CODE HERE
-
     cout << "----------------------------" << endl
          << endl;
 
@@ -331,6 +348,25 @@ void ConfFinal(void) {
     WriteConf.close();
 
     rnd.SaveSeed();
+
+}
+
+void LoadConf(void) {
+
+    ifstream ReadConf;
+    ReadConf.open("config.final");
+
+    cout << "Loading initial configuration" << endl;
+
+    // Read exactly nspin lines => no need to check array boundaries
+
+    for (int i = 0; i < nspin; ++i) {
+
+        ReadConf >> s[i];
+
+    }
+
+    ReadConf.close();
 
 }
 

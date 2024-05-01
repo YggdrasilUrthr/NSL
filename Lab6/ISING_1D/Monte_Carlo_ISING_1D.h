@@ -35,10 +35,10 @@ double s[m_spin];
 // thermodynamical state
 int nspin;
 double beta,temp,J,h;
-std::string h_str;
+std::string h_str, eq_str;
 
 // simulation
-int nstep, nblk, metro;
+int nstep, nblk, metro, restart, equil;
 
 //functions
 void Input(void);
@@ -47,6 +47,7 @@ void Accumulate(void);
 void Averages(int);
 void Move(int);
 void ConfFinal(void);
+void LoadConf(void);
 void Measure(void);
 double Boltzmann(int, int);
 int Pbc(int);

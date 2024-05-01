@@ -1,12 +1,12 @@
-.5000
+.50
 50
 1.0
 0
-0
-20
-100000
+1
+1000
 1
 0
+1
 
   ReadInput >> temp;
   ReadInput >> nspin;
