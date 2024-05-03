@@ -2,14 +2,17 @@ N       C++     Py
 1       ok            
 2       ok
 3       ok*
-4       ok
+4       ok*
 5       ok
 6       ok
-7       wrk
-8
+7       ok*
+8       wrk
 9       ok?
 10      
 11
 12
 
 3: * check C in direct sampling
+4: * maybe check error bars?
+7: * restart appends to output dat files => ok in Lab4 (pyhton file handling), 
+     but maybe change directly in sh script
