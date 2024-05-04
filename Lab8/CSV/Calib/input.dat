@@ -1,0 +1,35 @@
+0.8
+1
+1
+1.0
+0.001
+1.0
+1.0
+2.0
+20000
+1
+2.0
+1
+0
+0
+100
+1000
+100
+
+  ReadInput >> step_sa
+  ReadInput >> N_SA
+  ReadInput >> L_SA
+  ReadInput >> T_i
+  ReadInput >> T_f
+  ReadInput >> mu_0
+  ReadInput >> sigma_0
+  ReadInput >> step
+  ReadInput >> N
+  ReadInput >> L
+  ReadInput >> x_0
+  ReadInput >> save
+  ReadInput >> save_SA
+  ReadInput >> save_final
+  ReadInput >> N_f
+  ReadInput >> L_f
+  ReadInput >> nbins

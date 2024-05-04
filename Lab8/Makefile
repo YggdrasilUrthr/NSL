@@ -3,7 +3,7 @@ LIBS := ../Libs/
 Ex8.out: Ex8.o csvwriter.o random.o 
 	g++ -g Ex8.o csvwriter.o random.o -o Ex8.out
 
-Ex8.o: $(LIBS)/CsvWriter/csvwriter.h $(LIBS)/RanGen/random.h Ex8.cpp
+Ex8.o: $(LIBS)/CsvWriter/csvwriter.h $(LIBS)/RanGen/random.h Ex8.cpp Ex8.h Psi.h
 	g++ -g -c Ex8.cpp -o Ex8.o
 
 csvwriter.o: $(LIBS)/CsvWriter/csvwriter.h
