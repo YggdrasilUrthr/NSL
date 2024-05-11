@@ -10,11 +10,14 @@ void Population::ClearHistory() {
 void Population::InitChromosomes() {
 
     std::vector<uint32_t> Seed(m_N_Cities, 0);
-    std::iota(std::begin(Seed), std::end(Seed), 1); 
+    std::iota(std::begin(Seed), std::end(Seed), 1);         // Seed given by (1,2,3...)
 
-    m_Chromosomes.push_back(Chromosome(Seed));            // NOTE In principle should remain, removed otherwise no evolution on circle
+    m_Chromosomes.clear();
+    m_Chromosomes.push_back(Chromosome(Seed));              
 
-    for (size_t i = 0; i < (m_M - 1); i++) {                // Was i < (m_M - 1)
+    // Generate all other chromosomes by randomly permuting elements of Seed
+
+    for (size_t i = 0; i < (m_M - 1); i++) {
 
         uint32_t a, b;
 
@@ -34,8 +37,8 @@ void Population::InitChromosomes() {
 
 }
 
-Population::Population(uint32_t M, uint32_t N_Gen, std::vector<City> Cities, uint32_t PrimeLines) : 
-    m_M(M), m_N_Gen(N_Gen), m_Cities(Cities) {
+Population::Population(uint32_t M, uint32_t N_Gen, std::vector<City> Cities, uint32_t PrimeLines, bool verbose) : 
+    m_M(M), m_N_Gen(N_Gen), m_Cities(Cities), m_verbose(verbose) {
 
     m_Rnd.Init_Random_Gen(PrimeLines);
     m_N_Cities = m_Cities.size();
@@ -45,8 +48,8 @@ Population::Population(uint32_t M, uint32_t N_Gen, std::vector<City> Cities, uin
 }
 
 Population::Population(uint32_t M, uint32_t N_Gen, std::vector<City> Cities, 
-                       std::vector<double> Mutate_Prob, double Crossover_Prob, uint32_t PrimeLines) : 
-    m_M(M), m_N_Gen(N_Gen), m_Cities(Cities), m_Mutate_Prob(Mutate_Prob), m_Crossover_Prob(Crossover_Prob) {
+                       std::vector<double> Mutate_Prob, double Crossover_Prob, uint32_t PrimeLines, bool verbose) : 
+    m_M(M), m_N_Gen(N_Gen), m_Cities(Cities), m_Mutate_Prob(Mutate_Prob), m_Crossover_Prob(Crossover_Prob), m_verbose(verbose) {
 
     m_Rnd.Init_Random_Gen(PrimeLines);
     m_N_Cities = m_Cities.size();
@@ -147,6 +150,8 @@ void Population::OrderPop() {
 
 Chromosome Population::Select() {
 
+    // Order the population and randomly select and element according to fitness
+
     if(!m_is_Ordered) {
 
         OrderPop();
@@ -161,6 +166,8 @@ Chromosome Population::Select() {
 }
 
 void Population::Mutate(Chromosome &X) {
+
+    // Generate suitable indices and bind them to permutation functions
 
     uint32_t n, m;
 
@@ -203,6 +210,8 @@ void Population::Mutate(Chromosome &X) {
 
     MutateOps.push_back(std::bind(M_Permute, std::placeholders::_1, n, m));
 
+    // Apply permutations with their probabilities
+
     for(size_t i = 0; i < MutateOps.size(); ++i) {
 
         double r = m_Rnd.Rannyu();
@@ -221,6 +230,8 @@ void Population::Mutate(Chromosome &X) {
 
 void Population::Crossover(Chromosome &X, Chromosome &Y) {
 
+    // Apply crossover with its probability
+
     double r = m_Rnd.Rannyu();
 
     if(r >= m_Crossover_Prob) {
@@ -229,11 +240,12 @@ void Population::Crossover(Chromosome &X, Chromosome &Y) {
 
     }
 
-    uint32_t CutPnt = m_Rnd.GenInt(2, m_N_Cities - 1);
+    uint32_t CutPnt = m_Rnd.GenInt(2, m_N_Cities - 1);          // Select a cut point
 
     std::vector<uint32_t> * X_Seq = X.ReadModSeq();
     std::vector<uint32_t> * Y_Seq = Y.ReadModSeq();
 
+    // Indices in which the cut cities appear in the consort
     std::vector<uint32_t> X_Idxs;
     std::vector<uint32_t> Y_Idxs;
 
@@ -247,9 +259,11 @@ void Population::Crossover(Chromosome &X, Chromosome &Y) {
 
     }
 
+    // Order the indices s.t. they wil be filled with the same order as in the consort
     std::sort(X_Idxs.begin(), X_Idxs.end());
     std::sort(Y_Idxs.begin(), Y_Idxs.end());
 
+    // Crossover'd part of the two sequences
     std::vector<uint32_t> X_Temp(m_N_Cities - CutPnt, 0);
     std::vector<uint32_t> Y_Temp(m_N_Cities - CutPnt, 0);
 
@@ -260,12 +274,15 @@ void Population::Crossover(Chromosome &X, Chromosome &Y) {
 
     }
     
+    // Apply crossover
     std::swap_ranges(X_Seq->begin() + CutPnt, X_Seq->end(), X_Temp.begin());
     std::swap_ranges(Y_Seq->begin() + CutPnt, Y_Seq->end(), Y_Temp.begin());
 
 }
 
 void Population::Evolve(bool ClearHist, bool WriteHist) {
+
+    // New evolution => clear previous history
 
     if(ClearHist) {
 
@@ -276,7 +293,8 @@ void Population::Evolve(bool ClearHist, bool WriteHist) {
     for (size_t i = 0; i < m_N_Gen; ++i) {
 
         std::vector<Chromosome> NewGen;
-        EvaluateFitness();
+
+        // Create a new generation from the most fitted elements of the previous one
 
         for (size_t j = 0; j < m_Chromosomes.size() / 2; ++j) {
 
@@ -290,6 +308,7 @@ void Population::Evolve(bool ClearHist, bool WriteHist) {
             
             Crossover(Parents[0], Parents[1]);
 
+            // Mutate after crossover 
             for (auto item : Parents) {
 
                 Mutate(item);
@@ -298,12 +317,23 @@ void Population::Evolve(bool ClearHist, bool WriteHist) {
             }
 
         }
+        
+        std::swap(m_Chromosomes, NewGen);
+        m_is_Ordered = false;
 
+        EvaluateFitness();
+        OrderPop();
+
+        // Fill history of current generation
         m_Best_Fit.push_back(m_Chromosomes[0].GetFit());
         m_Best_Half_Avg.push_back(EvalBestHalfAvg());
 
-        std::swap(m_Chromosomes, NewGen);
-        m_is_Ordered = false;                                   // Breaks things
+        if(m_verbose) {
+
+            std::cout << "Running generation " << i + 1 << "/" << m_N_Gen << "...\t" << "Best Fit/Avg Fit: " 
+                      << std::to_string(m_Best_Fit.back()) << "/" << std::to_string(m_Best_Half_Avg.back()) << std::endl;
+
+        }
 
     }    
 

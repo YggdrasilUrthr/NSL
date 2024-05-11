@@ -1,0 +1,11 @@
+300
+1000
+4.0
+0.1
+0.5
+
+    ReadInput >> N_Gens
+    ReadInput >> N_Chroms
+    ReadInput >> p
+    ReadInput >> Mutate_Prob
+    ReadInput >> Crossover_Prob

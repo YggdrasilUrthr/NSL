@@ -4,18 +4,30 @@
 #include "../Libs/CsvWriter/csvwriter.h"
 
 const static std::string csv_path = "./CSV/";
+void Input(uint32_t &, uint32_t &, double &, double &, double &);
 
 int main() {
 
-    const static uint32_t N_Cities = 34;
-    const static uint32_t N_Gens = 100;
-    const static uint32_t N_Chroms = 400;
+    const static uint32_t N_Cities = 34;                                    // Number of cities (chromosome sequence length)
+    uint32_t N_Gens = 300;                                                  // Number of generations
+    uint32_t N_Chroms = 1e3;                                                // Number of chromosomes per generation
+    double p = 2.0;                                                         // Selection op p parameter, default 2.0
+    double Mutate_Prob = 0.1;                                               // Mutation probability, default 10%
+    double Crossover_Prob = 0.5;                                            // Crossover probability, default 50%
+
+    Input(N_Gens, N_Chroms, p, Mutate_Prob, Crossover_Prob);
 
     std::vector<City> Cities;
 
+    // Generate cities as randomly placed on a circumference
+
+    Random Rnd;
+    Rnd.Init_Random_Gen();
+
     for (size_t i = 0; i < N_Cities; ++i) {
 
-        double theta = 2 * M_PI / N_Cities * i;
+        //double theta = 2 * M_PI / N_Cities * i;                           // Use this if cities must be regularly distributed
+        double theta = Rnd.Rannyu() * (2.0 * M_PI);                         // Use this if cities must be randomly distributed
         Cities.push_back(City());
 
         Cities.back().x = cos(theta);
@@ -25,11 +37,16 @@ int main() {
     
 
     Population Pop(N_Chroms, N_Gens, Cities);
-    std::vector<double> Mutate_Prob(MutationsNumber, 0.07);
-    Pop.SetMutateProb(Mutate_Prob);
-    Pop.SetCrossoverProb(0.5);
+    std::vector<double> Mutate_Probs(MutationsNumber, Mutate_Prob);          
+    Pop.SetMutateProb(Mutate_Probs);
+    Pop.SetCrossoverProb(Crossover_Prob);                                      
+    Pop.ChangeP(p);                                                   
 
+    // Evolve population
+    std::cout << "Starting TSP with cities randomly placed on a circumference: " << std::endl;
     Pop.Evolve();
+
+    // Write out results
 
     csvwriter writer(csv_path + "Ex9_1_Hist.csv");
     
@@ -42,6 +59,7 @@ int main() {
     }
 
     Chromosome Best_Fit = Pop.GetBest();
+    std::cout << "Evolution completed, best sequence and fit obtained: " << std::endl;
     Best_Fit.PrintData();
 
     writer.change_file(csv_path + "Ex9_1_Cities.csv");
@@ -57,10 +75,11 @@ int main() {
     writer.change_file(csv_path + "Ex9_1_Solution.csv");
     writer.write_csv_line(Best_Fit.ReadSeq());
 
-    Random Rnd;
-    Rnd.Init_Random_Gen();
-
     Cities.clear();
+
+    std::cout << "***********************************************************************************" << std::endl;
+
+    // Randomly generate cities inside a square with unitary edge
 
     for (size_t i = 0; i < N_Cities; ++i) {
 
@@ -71,8 +90,12 @@ int main() {
 
     }
 
+    // Evolve population
+    std::cout << "Starting TSP with cities randomly placed inside a square: " << std::endl;
     Pop.ChangeCities(Cities);
     Pop.Evolve();
+
+    // Write out results
 
     writer.change_file(csv_path + "Ex9_2_Hist.csv");
     Hist = Pop.GetHist();
@@ -84,6 +107,7 @@ int main() {
     }
 
     Best_Fit = Pop.GetBest();
+    std::cout << "Evolution completed, best sequence and fit obtained: " << std::endl;
     Best_Fit.PrintData();
 
     writer.change_file(csv_path + "Ex9_2_Cities.csv");
@@ -100,5 +124,33 @@ int main() {
     writer.write_csv_line(Best_Fit.ReadSeq());
 
     return 0;
+
+}
+
+void Input(uint32_t &N_Gens, uint32_t &N_Chroms, double &p, double &Mutate_Prob, double &Crossover_Prob) {
+
+    std::ifstream ReadInput;
+    ReadInput.open("params.dat");
+
+    if (!ReadInput.is_open()) {
+
+        std::cout << "No external configuration file found, using default parameters." << std::endl;
+        std::cout << "***********************************************************************************" << std::endl;
+        return;
+
+    }
+
+    std::cout << "Reading external parameters..." << std::endl;
+
+    ReadInput >> N_Gens;
+    ReadInput >> N_Chroms;
+    ReadInput >> p;
+    ReadInput >> Mutate_Prob;
+    ReadInput >> Crossover_Prob;
+
+    ReadInput.close();
+
+    std::cout << "***********************************************************************************" << std::endl;
+    
 
 }
