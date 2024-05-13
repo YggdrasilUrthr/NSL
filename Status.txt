@@ -8,8 +8,8 @@ N       C++     Py
 7       ok*
 8       ok*
 9       ok
-10      wrk
-11
+10      ok
+11      wrk
 12
 
 3: * check C in direct sampling

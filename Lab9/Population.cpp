@@ -75,6 +75,12 @@ void Population::ChangeP(double p) {
 
 }
 
+void Population::ChangeGenNumber(uint32_t N_Gen) {
+
+    m_N_Gen = N_Gen;
+
+}
+
 void Population::SetMutateProb(std::vector<double> Mutate_Prob) {
 
     if(Mutate_Prob.size() != MutationsNumber){
@@ -290,6 +296,9 @@ void Population::Evolve(bool ClearHist, bool WriteHist) {
 
     }
 
+    EvaluateFitness();
+    OrderPop();
+
     for (size_t i = 0; i < m_N_Gen; ++i) {
 
         std::vector<Chromosome> NewGen;
@@ -348,6 +357,18 @@ Chromosome Population::GetBest() {
     }
 
     return m_Chromosomes[0];
+
+}
+
+Chromosome * Population::GetModBest() {
+
+    if(!m_is_Ordered) {
+
+        OrderPop();
+
+    }
+
+    return &m_Chromosomes[0];
 
 }
 

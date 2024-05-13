@@ -15,7 +15,7 @@ class Population {
     private:
     
         const uint32_t m_M;                                     // Number of chromosomes in population
-        const uint32_t m_N_Gen;                                 // Number of generations
+        uint32_t m_N_Gen;                                       // Number of generations
         Random m_Rnd;                                           // Random generator
 
         std::vector<Chromosome> m_Chromosomes;                  // Population chromosomes
@@ -30,8 +30,6 @@ class Population {
         bool m_is_Ordered = false;                              // Are the population chromosomes ordered by fit?
         double m_p = 2;                                         // p parameter in selection operator
 
-        bool m_verbose = true;                                    // Print information during evolution
-
         void ClearHistory();                                    // Clears fitness vectors
         void InitChromosomes();                                 // Randomly fill the popultion
         void OrderPop();                                        // Order the population by fitness (lowest fitness first)
@@ -43,6 +41,8 @@ class Population {
 
     public:
     
+        bool m_verbose = true;                                    // Print information during evolution
+
         // Constructors
 
         Population(uint32_t M, uint32_t N_Gen, std::vector<City> Cities, uint32_t PrimesLine = 1, bool verbose = true);
@@ -53,6 +53,7 @@ class Population {
         // Change population properties
 
         void ChangeP(double p);
+        void ChangeGenNumber(uint32_t N_Gen);
         void ChangeCities(std::vector<City> NewCities);
         void SetMutateProb(std::vector<double> Mutate_Prob);
         void SetCrossoverProb(double Crossover_Prob);
@@ -60,7 +61,8 @@ class Population {
         // Evolve and get data
 
         void Evolve(bool ClearHist = true, bool WriteHist = true);      // Evolution operator
-        Chromosome GetBest();                                           // Get the best-fitted chromosme
+        Chromosome GetBest();                                           // Get the best-fitted chromosome
+        Chromosome * GetModBest();                                      // Get a modifiable refernce to bestt-fitted chromosome
         std::vector<std::vector<double>> GetHist();                     // Get popultation history
         void PrintAll();                                                // Print all chromosome data
 
