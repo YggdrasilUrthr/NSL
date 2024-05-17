@@ -9,8 +9,8 @@ N       C++     Py
 8       ok*
 9       ok
 10      ok
-11      wrk
-12
+11      ok
+12      wrk
 
 3: * check C in direct sampling
 4: * maybe check error bars?
