@@ -50,7 +50,7 @@ int main() {
 
     // The sistem is periodic, is then possible to check hits only on a single cell (0, d)
 
-    const uint32_t M = 100000;               // Number of throws
+    const uint32_t M = 100000;              // Number of throws
     const uint32_t N = 100;                 // Number of blocks
     uint32_t K = M / N;
 

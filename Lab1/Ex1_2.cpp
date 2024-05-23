@@ -21,11 +21,15 @@ double error(double avg, double avg2, size_t n) {
 
 }
 
+// Uniform random generator
+
 double ran_lin(Random &rnd) {
 
     return rnd.Rannyu();
 
 }
+
+// Exponential random generator
 
 double ran_exp(Random &rnd, double lambda) {
 
@@ -36,6 +40,8 @@ double ran_exp(Random &rnd, double lambda) {
 
 }
 
+// Cauchy-Lorentx random generator
+
 double ran_cauchy_lorentz(Random &rnd, double Gamma, double mu) {
 
     double y = rnd.Rannyu();
@@ -44,6 +50,8 @@ double ran_cauchy_lorentz(Random &rnd, double Gamma, double mu) {
     return x;
 
 }
+
+// This function computes the observable S_n as requestes in the excercise for a random generator ran_func
 
 std::vector<double> gen_sn(const uint32_t M, const uint32_t N, std::function<double()> ran_func) {
 
@@ -72,8 +80,8 @@ int main(){
     Random rnd;
     rnd.Init_Random_Gen();
 
-    const uint32_t M = 10000;
-    const std::vector<uint32_t> Ns = {1, 2, 10, 100};
+    const uint32_t M = 10000;                                   // Number of throws
+    const std::vector<uint32_t> Ns = {1, 2, 10, 100};           // N parameter
     
     std::list<std::vector<double>> s_lin;
     std::list<std::vector<double>> s_exp;
@@ -86,6 +94,8 @@ int main(){
         s_cauchy_lorentz.push_back(gen_sn(M, N, std::bind(ran_cauchy_lorentz, rnd, 1, 0)));
 
     }
+
+    // Save data
 
     csvwriter writer(csv_path + "Ex1_2_lin.csv");
 
