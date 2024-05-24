@@ -20,6 +20,8 @@ bool in_interval(double lower, double upper, double num) {
 
 }
 
+// Move with discrete step
+
 void move_discr(Random &rnd, std::array<double, 3> &position, double a) {
 
     double r = rnd.Rannyu();
@@ -44,6 +46,8 @@ void move_discr(Random &rnd, std::array<double, 3> &position, double a) {
     }
     
 }
+
+// Sample point randomly distributed in a sphere
 
 std::vector<double> sample_polar(Random &rnd) {
 
@@ -70,6 +74,8 @@ std::vector<double> sample_polar(Random &rnd) {
 
 }
 
+// Move with coninuous step
+
 void move_cont(Random &rnd, std::array<double, 3> &position, double a) {
 
     std::vector<double> polar_vect = sample_polar(rnd);
@@ -79,6 +85,8 @@ void move_cont(Random &rnd, std::array<double, 3> &position, double a) {
     position[2] += a * cos(polar_vect[0]);
 
 }
+
+// L2 euclidean norm
 
 double norm2(std::array<double, 3> position) {
 
@@ -164,16 +172,17 @@ int main() {
 
         }
 
-        r_n_discr_data[i][1] = i != 0 ? error(r_n_discr_data[i][0], r_n_discr_avg2[i], B) : 0.0;   // This is the error on r_n^2, skip i = 0
+        r_n_discr_data[i][1] = i != 0 ? error(r_n_discr_data[i][0], r_n_discr_avg2[i], B) : 0.0;    // This is the error on r_n^2, skip i = 0
         r_n_discr_data[i][0] = sqrt(r_n_discr_data[i][0]);
-        r_n_discr_data[i][1] /= (2 * r_n_discr_data[i][0]);                         // Propagate errors to sqrt
+        r_n_discr_data[i][1] /= (2 * r_n_discr_data[i][0]);                                         // Propagate errors to sqrt
 
-        r_n_cont_data[i][1] = i != 0 ? error(r_n_cont_data[i][0], r_n_cont_avg2[i], B) : 0.0;   // This is the error on r_n^2, skip i = 0
+        r_n_cont_data[i][1] = i != 0 ? error(r_n_cont_data[i][0], r_n_cont_avg2[i], B) : 0.0;       // This is the error on r_n^2, skip i = 0
         r_n_cont_data[i][0] = sqrt(r_n_cont_data[i][0]);
-        r_n_cont_data[i][1] /= (2 * r_n_cont_data[i][0]);                         // Propagate errors to sqrt
+        r_n_cont_data[i][1] /= (2 * r_n_cont_data[i][0]);                                           // Propagate errors to sqrt
 
     }
     
+    // Dump results
 
     csvwriter writer(csv_path + "Ex2_2_discrete.csv");
 
@@ -190,7 +199,6 @@ int main() {
         writer.write_csv_line(std::vector<double>{item});
 
     }
-    
 
     return 0;
 

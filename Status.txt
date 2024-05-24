@@ -1,7 +1,7 @@
 N       C++     Py
 1       ok      ok
-2       ok      wrk
-3       ok*
+2       ok      ok
+3       ok*     wrk
 4       ok*
 5       ok
 6       ok

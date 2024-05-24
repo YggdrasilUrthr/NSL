@@ -21,7 +21,7 @@ double error(double avg_unif, double avg2_unif, size_t n) {
 
 }
 
-// generalized accept-reject
+// generalized accept-reject for a generic distribution
 
 double ran_ar(Random &rnd, std::function<double(double)> distrib, double xmin, double xmax, double pmax) {
 
@@ -44,21 +44,22 @@ int main() {
     Random rnd;
     rnd.Init_Random_Gen();
 
-    const uint32_t M = 100000;
-    const uint32_t N = 100;
+    const uint32_t M = 100000;      // Number of throws
+    const uint32_t N = 100;         // Number of blocks
 
-    // M = 100000 did not gave great results for linear sampling
-
-    uint32_t L = M / N;
+    uint32_t L = M / N;             // Throws per block
 
     std::vector<double> avg_unif;
     std::vector<double> avg2_unif;
     std::vector<double> avg_quad;
     std::vector<double> avg2_quad;
 
-    std::function<double(double)> quadratic = [](double x) {return (-pow(x, 2) + 1.0) * (3.0 / 2.0);}; //integ 2 / 3
+    // This is the chosen function for importance sampling
+    std::function<double(double)> quadratic = [](double x) {return (-pow(x, 2) + 1.0) * (3.0 / 2.0);};      // integral = 2 / 3
 
     csvwriter writer(csv_path + "Ex2_1_quadratic_distr.csv");
+
+    // Update accumulators
 
     for (size_t i = 0; i < N; ++i) {
 
@@ -91,6 +92,8 @@ int main() {
     double sum_prog_quad = 0;
     double sum_prog2_quad = 0;
 
+    // Compute progressive averages and errors
+
     for (size_t i = 0; i < N; ++i) {
         
         sum_prog_unif += avg_unif[i];
@@ -103,6 +106,7 @@ int main() {
 
     }
     
+    // Dump results
 
     writer.change_file(csv_path + "Ex2_1_uniform.csv");
 
