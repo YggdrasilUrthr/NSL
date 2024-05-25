@@ -19,6 +19,8 @@ double error(double avg_unif, double avg2_unif, size_t n) {
 
 }
 
+// Generate random numbers with Gaussian distribution
+
 double ran_gauss(Random &rnd, double mu, double sigma) {
 
     double rho = rnd.Rannyu();
@@ -44,8 +46,9 @@ int main() {
 
     const uint32_t M = 10000;       // Number of repetitions
     const uint32_t N = 100;         // Number of blocks
-    uint32_t L = M / N;
+    uint32_t L = M / N;             // Repetitions per block
 
+    // Market and option parameters
     const double S_0 = 100;
     const double T = 1;
     const double K = 100;
@@ -65,14 +68,17 @@ int main() {
 
         for(size_t j = 0; j < L; ++j) {
 
+            // Directly sample (òne step) GBM to obtain the S parameter
             double Z = ran_gauss(rnd, 0, 1);
             double S = S_0 * exp((r - pow(sigma, 2) / 2.0) * T + sigma * Z * sqrt(T));
             
+            // Compute Call (C) and put (P) prices from S
             C += exp(-r * T) * max(0, (S - K));
             P += exp(-r * T) * max(0, (K - S));
 
         }
         
+        // Accumulate the results in each block
         C_acc.push_back(C / L);
         C_acc2.push_back(pow(C / L, 2));
 
@@ -88,6 +94,7 @@ int main() {
 
     std::vector<std::vector<double>> data_out(N, std::vector<double>(4, 0));
 
+    // Data blocking
     for (size_t i = 0; i < N; ++i) {
 
         for (size_t j = 0; j < i + 1; ++j) {

@@ -19,6 +19,8 @@ double error(double avg_unif, double avg2_unif, size_t n) {
 
 }
 
+// Generate random numbers with Gaussian distribution
+
 double ran_gauss(Random &rnd, double mu, double sigma) {
 
     double rho = rnd.Rannyu();
@@ -44,15 +46,16 @@ int main() {
 
     const uint32_t M = 10000;       // Number of repetitions
     const uint32_t N = 100;         // Number of blocks
-    uint32_t L = M / N;
+    uint32_t L = M / N;             // Repetitions per block
 
+    // Market and option parameters
     const double S_0 = 100;
     const double T = 1;
     const double K = 100;
     const double r = 0.1;
     const double sigma = 0.25;
 
-    const uint32_t T_int = 100;
+    const uint32_t T_int = 100;         // Number of time steps (discrete sampling)
     const double t_step = T / T_int;
 
     std::vector<double> C_acc; 
@@ -71,12 +74,16 @@ int main() {
             double Z = 0;
             double S = S_0;     
 
+            // Same procedure as Ex3_1_1.cpp, but this time simulate GBM in T_int steps =>
+            // => the time interval is them t_step, and not T as before!
             for (size_t k = 0; k < T_int; ++k) {
 
                 Z = ran_gauss(rnd, 0, 1);
                 S *= exp((r - pow(sigma, 2) / 2.0) * t_step + sigma * Z * sqrt(t_step));
 
             }
+
+            // From this point on the program is exactly the same as Ex3_1_1.cpp
 
             C += exp(-r * T) * max(0, (S - K));
             P += exp(-r * T) * max(0, (K - S));
