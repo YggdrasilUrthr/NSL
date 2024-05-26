@@ -1,18 +1,17 @@
 N       C++     Py
-1       ok      ok
+1       ok      ok+
 2       ok      ok
 3       ok      ok
-4       ok*     wrk
-5       ok
+4       ok      ok
+5       ok      wrk
 6       ok
-7       ok*
+7       ok
 8       ok*
 9       ok
 10      ok
 11      ok
 12      ok
 
-4: * maybe check error bars?
-7: * restart appends to output dat files => ok in Lab4 (pyhton file handling), 
-     but maybe change directly in sh script
 8: * check if mu, sigma have to be taken as averages (quite sure they don't)
+
+1: + Maybe add some introduction?
