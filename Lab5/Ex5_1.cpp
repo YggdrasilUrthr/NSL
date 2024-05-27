@@ -8,6 +8,8 @@
 
 const static std::string csv_path = "./CSV/";
 
+// Ground state Psi
+
 double H_GS(std::vector<double> sph_coords) {
 
     double psi = exp(-sph_coords[0]) / sqrt(M_PI);
@@ -15,12 +17,16 @@ double H_GS(std::vector<double> sph_coords) {
 
 }
 
+// Excited state Psi
+
 double H_2P(std::vector<double> sph_coords) {
 
     double psi = 1.0 / 8.0 * sqrt(2.0 / M_PI) * sph_coords[0] * exp(-sph_coords[0] / 2.0) * cos(sph_coords[1]);
     return pow(psi, 2);
 
 }
+
+// Perform a Metropolis move
 
 bool Move(
     
@@ -65,6 +71,8 @@ bool Move(
     return false;
 
 }
+
+// Run the simulation
 
 void Run_Sim(
     
@@ -120,6 +128,8 @@ void Run_Sim(
     }
 
 }
+
+// Run Equilibration (same as Run_Sim but without data-blocking)
 
 std::vector<double> Equilibrate(
     
@@ -179,6 +189,7 @@ int main(int argc, char ** argv) {
     bool gauss_sample = false;
     std::string gauss_fn = "";
 
+    // Second CL argument: Perform Gauss sampling??
     if (argc > 2 && std::stoi(std::string(argv[2]))) {
     
         gauss_sample = true;
@@ -194,14 +205,15 @@ int main(int argc, char ** argv) {
     csvwriter writer_pos(csv_path + "Ex5_1_GS_pos" + gauss_fn + ".csv");
     csvwriter writer_r(csv_path + "Ex5_1_GS_r" + gauss_fn + ".csv");
 
+    // First CL argument: Dump eq. data??
     if (argc > 1 && std::stoi(std::string(argv[1]))) {
 
         // Dump equilibration data if asked by user
 
         writer_r.change_file(csv_path + "Ex5_1_GS_eq" + gauss_fn + ".csv");
-        eq_x_GS = Equilibrate(rnd, metr_step_gs, H_GS, 12.0, &writer_r, gauss_sample);       // Start 10 times metr_step away 
+        eq_x_GS = Equilibrate(rnd, metr_step_gs, H_GS, 15.0, &writer_r, gauss_sample);       // Start 10 <r0> away
         writer_r.change_file(csv_path + "Ex5_1_2P_eq" + gauss_fn + ".csv");
-        eq_x_2P = Equilibrate(rnd, metr_step_2P, H_2P, 24.0, &writer_r, gauss_sample);       // 2P orbital extends more in space (see <r0>), start farther away
+        eq_x_2P = Equilibrate(rnd, metr_step_2P, H_2P, 50.0, &writer_r, gauss_sample);       // 2P orbital extends more in space (see <r0>), start farther away
         writer_r.change_file(csv_path + "Ex5_1_GS_r" + gauss_fn + ".csv");
 
     } else {
@@ -211,6 +223,7 @@ int main(int argc, char ** argv) {
 
     }
 
+    // Run simulation after equilibration
     std::cout << "Simulating position for GS orbital..." << std::endl;
     Run_Sim(N, L, rnd, metr_step_gs, H_GS, writer_r, &writer_pos, eq_x_GS, gauss_sample);
 
