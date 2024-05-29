@@ -4,8 +4,8 @@ N       C++     Py
 3       ok      ok
 4       ok      ok
 5       ok      ok
-6       ok      wrk
-7       ok
+6       ok      ok
+7       ok      wrk
 8       ok*
 9       ok
 10      ok

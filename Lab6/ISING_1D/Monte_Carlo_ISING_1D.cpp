@@ -177,12 +177,12 @@ void Move(int metro) {
 
         // ip = o, sm = s[o]
 
-        energy_new = Boltzmann(-s[o], o);
-        energy_old = Boltzmann(s[o], o);
-        double energy_delta = energy_new - energy_old;
-
         if (metro == 1) { // Metropolis
         
+            energy_new = Boltzmann(-s[o], o);
+            energy_old = Boltzmann(s[o], o);
+            double energy_delta = energy_new - energy_old;
+
             p = min(1.0, exp(-beta * energy_delta));
 
             double r = rnd.Rannyu();  
@@ -196,13 +196,24 @@ void Move(int metro) {
 
         } else { // Gibbs sampling
 
-            p = 1.0 / (1.0 + exp(beta * energy_delta)); // +beta since all other spins are changed?
+            double s_new = rnd.Rannyu() >= 0.5 ? 1.0 : -1.0;    // Set random spin value. 
+
+            energy_new = Boltzmann(-s_new, o);
+            energy_old = Boltzmann(s_new, o);
+            double energy_delta = energy_new - energy_old;
+        
+            p = 1.0 / (1.0 + exp(-beta * energy_delta));
 
             double r = rnd.Rannyu();  
         
             if(r < p) {
 
-                s[o] *= -1.0;
+                s[o] = s_new;
+                accepted++;
+
+            } else {
+
+                s[o] = -s_new;
                 accepted++;
 
             }
