@@ -83,7 +83,7 @@ void Input() {
     ReadInput >> mu_0;
     ReadInput >> sigma_0;
 
-    // Read Metropolis paramters
+    // Read Metropolis parameters
     ReadInput >> step;
     ReadInput >> N;
     ReadInput >> L;
