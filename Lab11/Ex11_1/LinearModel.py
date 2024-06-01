@@ -2,10 +2,14 @@ import numpy as np
 import tensorflow as tf
 from tensorflow import keras
 
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, Activation
-from tensorflow.keras import backend as K
-from tensorflow.keras.utils import get_custom_objects
+seed=0
+np.random.seed(seed) # fix random seed
+tf.random.set_seed(seed)
+
+from keras.models import Sequential
+from keras.layers import Dense, Activation
+from keras import backend as K
+from keras.utils import get_custom_objects
 
 class LinearModel:
 
@@ -16,6 +20,7 @@ class LinearModel:
         self.m = m
         self.b = b
         self.verbose = verbose
+        self.history = None
 
         self.GenerateTrainData()
 
@@ -46,9 +51,9 @@ class LinearModel:
             batch_size=32, epochs=self.N_Epochs,
             shuffle=True, # a good idea is to shuffle input before at each epoch
             validation_data=(self.x_valid, self.y_valid), verbose = self.verbose)
-        
-    def GetInfo(self, full = False):
 
+    def GetInfo(self, full = False):
+        
         # get a summary of our composed model
         if full:
             self.model.summary()
@@ -66,3 +71,12 @@ class LinearModel:
         # evaluate model with the exact curve
         score = self.model.evaluate(self.x_valid, self.y_target, batch_size=32, verbose = self.verbose)
         return score
+    
+    def SaveModel(self, filename_model = './LM.keras', filename_history = './hist.npy'):
+        self.model.save(filename_model)
+        np.save(filename_history, self.history)
+
+    def LoadModel(self, filename_model = './LM.keras', filename_history = './hist.npy'):
+        print("Loading pre-trained model...")
+        self.model = keras.models.load_model(filename_model)
+        self.history = np.load(filename_history, allow_pickle = True).item()        
