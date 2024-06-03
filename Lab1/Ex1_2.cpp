@@ -45,13 +45,13 @@ double ran_exp(Random &rnd, double lambda) {
 double ran_cauchy_lorentz(Random &rnd, double Gamma, double mu) {
 
     double y = rnd.Rannyu();
-    double x = Gamma * tan(M_PI * (y - mu - 0.5)); //!!!! VERIFY !!!!!
+    double x = Gamma * tan(M_PI * (y - mu - 0.5));
 
     return x;
 
 }
 
-// This function computes the observable S_n as requestes in the excercise for a random generator ran_func
+// This function computes the observable S_n as requested in the exercise for a random generator ran_func
 
 std::vector<double> gen_sn(const uint32_t M, const uint32_t N, std::function<double()> ran_func) {
 
